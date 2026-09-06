@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Thêm tài khoản' if mode == 'new' else 'Sửa tài khoản' }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ 'Thêm tài khoản nhân viên' if mode == 'new' else 'Sửa tài khoản ' ~ user.full_name }}</h1>
+    <p class="text-muted mb-0">
+      {{ 'Tài khoản mới đăng nhập được ngay sau khi tạo.'
+         if mode == 'new' else 'Đổi mật khẩu là thao tác riêng, xem nút "Đặt lại mật khẩu".' }}
+    </p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('admin_users') }}">← Quay lại</a>
+</div>
+
+{% if errors._ %}
+  <div class="alert alert-danger">{{ errors._ }}</div>
+{% endif %}
+
+{% if mode == 'edit' and booking_count %}
+  <div class="alert alert-info">
+    Tài khoản này đang gắn với <strong>{{ booking_count }}</strong> lịch đặt.
+    Đổi tên đăng nhập không ảnh hưởng tới các lịch đã đặt trước đó.
+  </div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <section class="panel">
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="full_name">Họ tên <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.full_name %}is-invalid{% endif %}"
+                   id="full_name" name="full_name" value="{{ form.full_name }}"
+                   maxlength="100" placeholder="vd: Nguyễn Văn An" required>
+            <div class="invalid-feedback">{{ errors.full_name }}</div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="department">Phòng ban <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.department %}is-invalid{% endif %}"
+                   id="department" name="department" value="{{ form.department }}"
+                   maxlength="100" list="departmentOptions" placeholder="vd: Kinh doanh" required>
+            <datalist id="departmentOptions">
+              <option value="Kinh doanh"></option>
+              <option value="Marketing"></option>
+              <option value="Kỹ thuật"></option>
+              <option value="Nhân sự"></option>
+              <option value="Kế toán"></option>
+              <option value="Ban Giám đốc"></option>
+            </datalist>
+            <div class="invalid-feedback">{{ errors.department }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label" for="username">Tên đăng nhập <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.username %}is-invalid{% endif %}"
+                   id="username" name="username" value="{{ form.username }}"
+                   maxlength="30" placeholder="vd: an.nv" required>
+            <div class="form-text">
+              Bắt đầu bằng chữ cái, chỉ gồm chữ thường, số, dấu chấm, gạch ngang hoặc gạch dưới.
+            </div>
+            <div class="invalid-feedback">{{ errors.username }}</div>
+          </div>
+
+          {% if mode == 'new' %}
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="password">Mật khẩu <span class="req">*</span></label>
+              <input type="password"
+                     class="form-control {% if errors.password %}is-invalid{% endif %}"
+                     id="password" name="password" autocomplete="new-password" required>
+              <div class="form-text">Ít nhất 6 ký tự.</div>
+              <div class="invalid-feedback">{{ errors.password }}</div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="confirm_password">
+                Nhập lại mật khẩu <span class="req">*</span>
+              </label>
+              <input type="password"
+                     class="form-control {% if errors.confirm_password %}is-invalid{% endif %}"
+                     id="confirm_password" name="confirm_password"
+                     autocomplete="new-password" required>
+              <div class="invalid-feedback">{{ errors.confirm_password }}</div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary btn-lg">
+            {{ 'Tạo tài khoản' if mode == 'new' else 'Lưu thay đổi' }}
+          </button>
+          <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('admin_users') }}">Huỷ</a>
+          {% if mode == 'edit' %}
+            <a class="btn btn-outline-secondary btn-lg ms-auto"
+               href="{{ url_for('admin_user_reset_password', user_id=user.id) }}">
+              Đặt lại mật khẩu
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <section class="panel">
+      <h2 class="h6">Gợi ý</h2>
+      <ul class="small text-muted mb-0 ps-3">
+        <li class="mb-2">Tên đăng nhập không phân biệt hoa thường khi đăng nhập.</li>
+        <li class="mb-2">Không xoá được tài khoản đã có lịch đặt gắn với nó — hãy đặt lại mật
+          khẩu thay vì xoá nếu chỉ muốn ngăn nhân viên đó tự đăng nhập.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

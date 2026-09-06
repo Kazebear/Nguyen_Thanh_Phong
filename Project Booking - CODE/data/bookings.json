@@ -1,0 +1,102 @@
+[
+  {
+    "id": "BK001",
+    "roomId": "R101",
+    "date": "2026-07-27",
+    "startTime": "09:00",
+    "endTime": "10:00",
+    "bookedBy": "Nguyễn Văn An",
+    "department": "Kinh doanh",
+    "purpose": "Họp giao ban tuần"
+  },
+  {
+    "id": "BK002",
+    "roomId": "R101",
+    "date": "2026-07-27",
+    "startTime": "14:00",
+    "endTime": "15:30",
+    "bookedBy": "Trần Thị Bình",
+    "department": "Marketing",
+    "purpose": "Duyệt kế hoạch chiến dịch Q3"
+  },
+  {
+    "id": "BK003",
+    "roomId": "R201",
+    "date": "2026-07-27",
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "bookedBy": "Lê Minh Cường",
+    "department": "Kỹ thuật",
+    "purpose": "Demo sản phẩm mới cho khách hàng"
+  },
+  {
+    "id": "BK004",
+    "roomId": "R202",
+    "date": "2026-07-27",
+    "startTime": "13:00",
+    "endTime": "14:00",
+    "bookedBy": "Phạm Thu Hà",
+    "department": "Nhân sự",
+    "purpose": "Phỏng vấn ứng viên"
+  },
+  {
+    "id": "BK005",
+    "roomId": "R301",
+    "date": "2026-07-27",
+    "startTime": "15:00",
+    "endTime": "17:00",
+    "bookedBy": "Hoàng Đức Long",
+    "department": "Ban Giám đốc",
+    "purpose": "Họp với đối tác chiến lược"
+  },
+  {
+    "id": "BK006",
+    "roomId": "R102",
+    "date": "2026-07-28",
+    "startTime": "08:30",
+    "endTime": "09:30",
+    "bookedBy": "Đỗ Ngọc Mai",
+    "department": "Kế toán",
+    "purpose": "Rà soát báo cáo tài chính"
+  },
+  {
+    "id": "BK007",
+    "roomId": "R201",
+    "date": "2026-07-28",
+    "startTime": "09:00",
+    "endTime": "12:00",
+    "bookedBy": "Vũ Thanh Tùng",
+    "department": "Kỹ thuật",
+    "purpose": "Workshop đào tạo nội bộ"
+  },
+  {
+    "id": "BK008",
+    "roomId": "R101",
+    "date": "2026-07-28",
+    "startTime": "10:30",
+    "endTime": "11:30",
+    "bookedBy": "Ngô Thị Hương",
+    "department": "Marketing",
+    "purpose": "Trao đổi với agency quảng cáo"
+  },
+  {
+    "id": "BK009",
+    "roomId": "R202",
+    "date": "2026-07-28",
+    "startTime": "15:00",
+    "endTime": "16:00",
+    "bookedBy": "Bùi Quốc Anh",
+    "department": "Kinh doanh",
+    "purpose": "Họp review hợp đồng"
+  },
+  {
+    "id": "BK010",
+    "roomId": "R301",
+    "date": "2026-07-29",
+    "startTime": "09:00",
+    "endTime": "10:30",
+    "bookedBy": "Nguyễn Thị Kim",
+    "department": "Ban Giám đốc",
+    "purpose": "Họp hội đồng quản trị"
+  }
+]

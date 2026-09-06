@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+
+{% block title %}Tạo lịch đặt phòng · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Tạo lịch đặt phòng</h1>
+    <p class="text-muted mb-0">Điền thông tin cuộc họp. Hệ thống sẽ kiểm tra lại tình trạng phòng trước khi lưu.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('rooms') }}">← Chọn phòng khác</a>
+</div>
+
+{% if errors.conflict %}
+  <div class="alert alert-danger" role="alert">{{ errors.conflict }}</div>
+{% endif %}
+
+{% if errors.auth %}
+  <div class="alert alert-warning d-flex flex-wrap gap-3 align-items-center" role="alert">
+    <span class="flex-grow-1">🔒 {{ errors.auth }}</span>
+    <a class="btn btn-primary" href="{{ login_url }}">Đăng nhập để hoàn tất</a>
+  </div>
+{% elif not current_user and not is_admin %}
+  <div class="alert alert-info d-flex flex-wrap gap-3 align-items-center" role="alert">
+    <span class="flex-grow-1">
+      Bạn có thể xem và điền biểu mẫu tự do, nhưng cần đăng nhập để hoàn tất đặt phòng.
+    </span>
+    <a class="btn btn-outline-primary"
+       href="{{ url_for('login', next=request.full_path) }}">Đăng nhập</a>
+  </div>
+{% elif is_admin and not current_user %}
+  <div class="alert alert-secondary small" role="alert">
+    🔧 Bạn đang đặt phòng với quyền quản trị viên, không cần đăng nhập tài khoản nhân viên.
+  </div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <section class="panel">
+      <form id="bookingForm" method="post" action="{{ url_for('book') }}" novalidate>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label" for="room_id">Phòng họp <span class="req">*</span></label>
+            <select class="form-select {% if errors.room_id %}is-invalid{% endif %}"
+                    id="room_id" name="room_id" required>
+              <option value="">— Chọn phòng —</option>
+              {% for r in rooms %}
+                <option value="{{ r.id }}" data-capacity="{{ r.capacity }}"
+                        {% if form.room_id == r.id %}selected{% endif %}>
+                  {{ r.name }} · Tầng {{ r.floor }} · {{ r.capacity }} người
+                </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Chỉ hiển thị các phòng đang hoạt động. Phòng bảo trì không thể đặt.</div>
+            <div class="invalid-feedback" data-field="room_id">{{ errors.room_id or 'Vui lòng chọn phòng họp.' }}</div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="date">Ngày họp <span class="req">*</span></label>
+            <input type="date" class="form-control {% if errors.date %}is-invalid{% endif %}"
+                   id="date" name="date" value="{{ form.date }}" min="{{ today }}" required>
+            <div class="invalid-feedback" data-field="date">{{ errors.date or 'Vui lòng chọn ngày họp.' }}</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label" for="start_time">Giờ bắt đầu <span class="req">*</span></label>
+            <input type="time" class="form-control {% if errors.start_time %}is-invalid{% endif %}"
+                   id="start_time" name="start_time" value="{{ form.start_time }}"
+                   min="{{ booking_min_time }}" max="{{ booking_max_time }}" required>
+            <div class="invalid-feedback" data-field="start_time">{{ errors.start_time or 'Vui lòng nhập giờ bắt đầu.' }}</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label" for="end_time">Giờ kết thúc <span class="req">*</span></label>
+            <input type="time" class="form-control {% if errors.end_time %}is-invalid{% endif %}"
+                   id="end_time" name="end_time" value="{{ form.end_time }}"
+                   min="{{ booking_min_time }}" max="{{ booking_max_time }}" required>
+            <div class="invalid-feedback" data-field="end_time">{{ errors.end_time or 'Giờ kết thúc phải lớn hơn giờ bắt đầu.' }}</div>
+          </div>
+          <div class="col-12">
+            <p class="form-text mt-0">
+              Chỉ nhận đặt trong khung {{ booking_min_time }}–{{ booking_max_time }},
+              mỗi lịch tối thiểu 15 phút và tối đa 4 giờ.
+            </p>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="booked_by">Người đặt <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.booked_by %}is-invalid{% endif %}"
+                   id="booked_by" name="booked_by" value="{{ form.booked_by }}"
+                   maxlength="255" placeholder="vd: Nguyễn Văn An"
+                   {% if current_user %}readonly{% endif %} required>
+            {% if current_user %}
+              <div class="form-text">Lấy từ tài khoản đang đăng nhập.</div>
+            {% endif %}
+            <div class="invalid-feedback" data-field="booked_by">{{ errors.booked_by or 'Vui lòng nhập người đặt.' }}</div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="department">Phòng ban <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.department %}is-invalid{% endif %}"
+                   id="department" name="department" value="{{ form.department }}"
+                   maxlength="255" list="departmentOptions" placeholder="vd: Kinh doanh"
+                   {% if current_user %}readonly{% endif %} required>
+            <datalist id="departmentOptions">
+              <option value="Kinh doanh"></option>
+              <option value="Marketing"></option>
+              <option value="Kỹ thuật"></option>
+              <option value="Nhân sự"></option>
+              <option value="Kế toán"></option>
+              <option value="Ban Giám đốc"></option>
+            </datalist>
+            <div class="invalid-feedback" data-field="department">{{ errors.department or 'Vui lòng nhập phòng ban.' }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label" for="purpose">Mục đích cuộc họp <span class="req">*</span></label>
+            <textarea class="form-control {% if errors.purpose %}is-invalid{% endif %}"
+                      id="purpose" name="purpose" rows="3" maxlength="255"
+                      placeholder="vd: Họp giao ban tuần" required>{{ form.purpose }}</textarea>
+            <div class="invalid-feedback" data-field="purpose">{{ errors.purpose or 'Vui lòng nhập mục đích cuộc họp.' }}</div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="attendees">Số người dự kiến</label>
+            <input type="number" class="form-control {% if errors.attendees %}is-invalid{% endif %}"
+                   id="attendees" name="attendees" min="1" step="1" value="{{ form.attendees }}">
+            <div class="form-text">Không bắt buộc. Nếu nhập, hệ thống sẽ kiểm tra sức chứa.</div>
+            <div class="invalid-feedback" data-field="attendees">{{ errors.attendees or 'Số người phải lớn hơn 0.' }}</div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary btn-lg" id="submitBooking">
+            <span class="btn-text">Xác nhận đặt phòng</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+          </button>
+          <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('rooms') }}">Huỷ</a>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <section class="panel" id="roomPreview">
+      <h2 class="h6">Thông tin phòng</h2>
+      {% if room %}
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <strong>{{ room.name }}</strong>
+          {{ status_badge(room) }}
+        </div>
+        <ul class="room-meta">
+          <li><span>Mã phòng</span><strong>{{ room.id }}</strong></li>
+          <li><span>Tầng</span><strong>{{ room.floor }}</strong></li>
+          <li><span>Sức chứa</span><strong>{{ room.capacity }} người</strong></li>
+        </ul>
+        <div class="room-equipment">
+          {% for item in room.equipment %}<span class="chip">{{ item }}</span>{% endfor %}
+        </div>
+        {% if not room.bookable %}
+          <div class="alert alert-warning mt-3 mb-0">
+            Phòng này đang bảo trì, không thể tạo lịch đặt.
+          </div>
+        {% endif %}
+      {% else %}
+        <p class="text-muted mb-0">Chọn một phòng ở bên trái để xem thông tin chi tiết.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel mt-3">
+      <h2 class="h6">Lịch đã đặt của phòng trong ngày</h2>
+      <div id="roomSchedule" class="schedule-list">
+        <p class="text-muted mb-0">Chọn phòng và ngày để xem các khung giờ đã có lịch.</p>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
+{% endblock %}

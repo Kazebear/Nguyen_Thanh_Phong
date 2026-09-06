@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+
+{% block title %}Nhật ký thay đổi · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Nhật ký thay đổi</h1>
+    <p class="text-muted mb-0">
+      {% if booking %}
+        Toàn bộ thao tác trên booking <code>{{ booking.id }}</code> – {{ booking.room_name }}.
+      {% else %}
+        Mọi thao tác tạo, sửa và huỷ lịch đặt của toàn hệ thống.
+      {% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if booking %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_logs') }}">Xem tất cả</a>
+      <a class="btn btn-outline-primary"
+         href="{{ url_for('booking_detail', booking_id=booking.id) }}">Chi tiết booking</a>
+    {% else %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_dashboard') }}">← Bảng quản trị</a>
+    {% endif %}
+  </div>
+</div>
+
+<section class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Tổng số mốc</span>
+      <span class="stat-value">{{ stats.total }}</span>
+      <span class="stat-hint">{{ stats.imported }} mốc khởi đầu</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Lịch được tạo</span>
+      <span class="stat-value">{{ stats.created }}</span>
+      <span class="stat-hint">Sau khi có nhật ký</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Lượt chỉnh sửa</span>
+      <span class="stat-value">{{ stats.updated }}</span>
+      <span class="stat-hint">Có ghi chi tiết thay đổi</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Lượt huỷ</span>
+      <span class="stat-value">{{ stats.cancelled }}</span>
+      <span class="stat-hint">Khung giờ đã được trả lại</span>
+    </div>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <form class="row g-3" method="get" action="{{ url_for('admin_logs') }}">
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="booking_id">Mã booking</label>
+      <input type="text" class="form-control" id="booking_id" name="booking_id"
+             value="{{ filters.booking_id }}" placeholder="vd: BK005">
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="action">Loại thao tác</label>
+      <select class="form-select" id="action" name="action">
+        <option value="">Tất cả</option>
+        {% for key, label in action_labels.items() %}
+          <option value="{{ key }}" {% if filters.action == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="actor">Người thao tác</label>
+      <input type="text" class="form-control" id="actor" name="actor"
+             value="{{ filters.actor }}" placeholder="Nhập tên...">
+    </div>
+    <div class="col-12 col-md-3 d-flex align-items-end gap-2">
+      <button type="submit" class="btn btn-outline-primary flex-grow-1">Lọc</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_logs') }}">Đặt lại</a>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Dòng hoạt động ({{ logs | length }})</h2>
+  </div>
+
+  {% if logs %}
+    <ol class="timeline">
+      {% for log in logs %}
+        <li class="timeline-item timeline-{{ log.action }}">
+          <div class="timeline-head">
+            <strong>{{ log.action_label }}</strong>
+            <time class="text-muted small">{{ log.created_at }}</time>
+          </div>
+          <div class="text-muted small mb-1">
+            bởi {{ log.actor }} ·
+            <a href="{{ url_for('booking_detail', booking_id=log.booking_id) }}">
+              <code>{{ log.booking_id }}</code></a>
+            {% if log.room_name %} · {{ log.room_name }}{% endif %}
+            {% if log.booking_date %} · {{ log.booking_date }}{% endif %}
+            {% if not booking %}
+              · <a href="{{ url_for('admin_logs', booking_id=log.booking_id) }}">chỉ xem lịch này</a>
+            {% endif %}
+          </div>
+
+          {% if log.changes %}
+            <ul class="change-list">
+              {% for change in log.changes %}
+                <li>
+                  <span class="change-field">{{ change.label }}</span>
+                  <span class="change-old">{{ change.old }}</span>
+                  <span class="change-arrow">→</span>
+                  <span class="change-new">{{ change.new }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% elif log.action == 'imported' %}
+            <p class="small text-muted mb-0">
+              Lịch có sẵn khi hệ thống bắt đầu lưu nhật ký, chưa ghi nhận thay đổi nào trước đó.
+            </p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    {{ empty_state('Không có mốc nào',
+                   'Không tìm thấy hoạt động nào khớp với bộ lọc hiện tại.', '🕘') }}
+  {% endif %}
+</section>
+{% endblock %}

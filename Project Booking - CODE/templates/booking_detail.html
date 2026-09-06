@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import state_badge, status_badge, empty_state %}
+
+{% block title %}Booking {{ booking.id }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Booking {{ booking.id }}</h1>
+    <p class="text-muted mb-0">Thông tin chi tiết của lịch đặt phòng.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-secondary" href="{{ url_for('history') }}">← Về lịch sử</a>
+    {% if booking.editable and (is_admin or (current_user and current_user.id == booking.user_id)) %}
+      <a class="btn btn-outline-primary"
+         href="{{ url_for('booking_edit', booking_id=booking.id) }}">Sửa</a>
+      <a class="btn btn-outline-danger"
+         href="{{ url_for('booking_cancel', booking_id=booking.id) }}">Huỷ lịch</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-5">
+    <section class="panel">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <h2 class="h6 mb-0">Thông tin cuộc họp</h2>
+        {{ state_badge(booking) }}
+      </div>
+      <ul class="room-meta">
+        <li><span>Phòng họp</span><strong>{{ booking.room_name }}</strong></li>
+        {% if room %}
+          <li><span>Tầng</span><strong>{{ room.floor }}</strong></li>
+          <li><span>Sức chứa</span><strong>{{ room.capacity }} người</strong></li>
+        {% endif %}
+        <li><span>Ngày họp</span><strong>{{ booking.date }}</strong></li>
+        <li><span>Khung giờ</span><strong>{{ booking.start_time }} – {{ booking.end_time }}</strong></li>
+        <li><span>Người đặt</span><strong>{{ booking.booked_by }}</strong></li>
+        <li><span>Phòng ban</span><strong>{{ booking.department }}</strong></li>
+      </ul>
+      <p class="mb-0"><span class="text-muted d-block small">Mục đích</span>{{ booking.purpose }}</p>
+
+      {% if room and not room.bookable %}
+        <div class="alert alert-warning mt-3 mb-0">
+          Phòng này hiện đang bảo trì.
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="col-12 col-lg-7">
+    <section class="panel">
+      <h2 class="h6">Lịch sử thay đổi</h2>
+      {% if is_admin %}
+        <p class="text-muted small">
+          Lịch đặt này đã được chỉnh sửa <strong>{{ change_count }}</strong> lần.
+        </p>
+        <a class="btn btn-outline-primary"
+           href="{{ url_for('admin_logs', booking_id=booking.id) }}">
+          Xem nhật ký thay đổi →
+        </a>
+      {% else %}
+        <p class="text-muted mb-0">
+          Nhật ký thay đổi chỉ dành cho quản trị viên.
+          {% if change_count %}
+            Lịch đặt này đã được chỉnh sửa {{ change_count }} lần.
+          {% endif %}
+        </p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

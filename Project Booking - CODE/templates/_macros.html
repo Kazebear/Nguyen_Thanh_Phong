@@ -1,0 +1,86 @@
+{# Các thành phần giao diện dùng lại giữa nhiều trang #}
+
+{% macro status_badge(room) -%}
+  {% if room.status == 'active' %}
+    <span class="badge badge-active">● {{ room.status_label }}</span>
+  {% elif room.status == 'maintenance' %}
+    <span class="badge badge-maintenance">🛠 {{ room.status_label }}</span>
+  {% else %}
+    <span class="badge badge-inactive">{{ room.status_label }}</span>
+  {% endif %}
+{%- endmacro %}
+
+{% macro state_badge(booking) -%}
+  <span class="badge badge-{{ booking.state }}">{{ booking.state_label }}</span>
+{%- endmacro %}
+
+{% macro room_card(room, book_url=None) -%}
+<div class="col-12 col-md-6 col-xl-4">
+  <article class="room-card h-100 {% if not room.bookable %}is-disabled{% endif %}">
+    <div class="room-thumb">
+      {% if room.image | has_image %}
+        <img src="{{ url_for('static', filename=room.image) }}" alt="{{ room.name }}" loading="lazy">
+      {% else %}
+        <div class="room-thumb-fallback" aria-hidden="true">
+          <span>{{ room.id }}</span>
+        </div>
+      {% endif %}
+      <div class="room-thumb-status">{{ status_badge(room) }}</div>
+    </div>
+    <div class="room-body">
+      <h3 class="room-name">{{ room.name }}</h3>
+      <ul class="room-meta">
+        <li><span>Mã phòng</span><strong>{{ room.id }}</strong></li>
+        <li><span>Tầng</span><strong>{{ room.floor }}</strong></li>
+        <li><span>Sức chứa</span><strong>{{ room.capacity }} người</strong></li>
+      </ul>
+      <div class="room-equipment">
+        {% for item in room.equipment %}
+          <span class="chip">{{ item }}</span>
+        {% else %}
+          <span class="text-muted small">Chưa cập nhật thiết bị</span>
+        {% endfor %}
+      </div>
+      {% if room.bookable %}
+        <a class="btn btn-primary w-100 mt-3"
+           href="{{ book_url or url_for('book', room_id=room.id) }}">Đặt phòng này</a>
+      {% else %}
+        <button class="btn btn-secondary w-100 mt-3" disabled>
+          Đang bảo trì – không thể đặt
+        </button>
+      {% endif %}
+    </div>
+  </article>
+</div>
+{%- endmacro %}
+
+{% macro room_grid_row(room, now_pct) -%}
+<div class="room-grid-label">
+  <strong>{{ room.name }}</strong>
+  <span class="text-muted small d-block">Tầng {{ room.floor }}</span>
+</div>
+<div class="room-grid-track {% if not room.bookable %}is-maintenance{% endif %}"
+     {% if room.bookable %}data-room-id="{{ room.id }}" data-room-name="{{ room.name }}"{% endif %}>
+  {% if now_pct is not none %}
+    <div class="now-line" style="left: {{ now_pct }}%"></div>
+  {% endif %}
+  {% for block in room.blocks %}
+    <div class="room-block"
+         style="left: {{ block.left_pct }}%; width: {{ block.width_pct }}%"
+         title="{{ block.booked_by }} ({{ block.department }}) · {{ block.start_time }}–{{ block.end_time }} · {{ block.purpose }}">
+      <span class="room-block-label">{{ block.start_time }}–{{ block.end_time }} · {{ block.booked_by }}</span>
+    </div>
+  {% endfor %}
+  {% if not room.bookable %}
+    <div class="maintenance-overlay">Đang bảo trì</div>
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro empty_state(title, description, icon='📭') -%}
+<div class="empty-state">
+  <div class="empty-icon">{{ icon }}</div>
+  <h3>{{ title }}</h3>
+  <p>{{ description }}</p>
+</div>
+{%- endmacro %}

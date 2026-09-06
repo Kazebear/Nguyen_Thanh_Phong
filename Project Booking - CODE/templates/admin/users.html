@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty_state %}
+
+{% block title %}Quản lý tài khoản · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Quản lý tài khoản nhân viên</h1>
+    <p class="text-muted mb-0">
+      Nhân viên có thể tự đăng ký ở trang <code>/register</code>, hoặc admin tạo hộ tại đây.
+    </p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin_dashboard') }}">← Bảng quản trị</a>
+    <a class="btn btn-primary" href="{{ url_for('admin_user_new') }}">+ Thêm tài khoản</a>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Danh sách tài khoản ({{ users | length }})</h2>
+  </div>
+
+  {% if users %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 admin-table">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Họ tên</th><th>Tên đăng nhập</th><th>Phòng ban</th>
+            <th>Lịch đặt</th><th>Ngày tạo</th><th class="text-end">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+            <tr>
+              <td><code>{{ user.id }}</code></td>
+              <td class="fw-semibold">{{ user.full_name }}</td>
+              <td><code>{{ user.username }}</code></td>
+              <td>{{ user.department }}</td>
+              <td>{{ user.booking_count }}</td>
+              <td class="text-nowrap">{{ user.created_at }}</td>
+              <td>
+                <div class="d-flex gap-1 justify-content-end flex-wrap">
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{{ url_for('admin_user_edit', user_id=user.id) }}">Sửa</a>
+                  <a class="btn btn-sm btn-outline-secondary"
+                     href="{{ url_for('admin_user_reset_password', user_id=user.id) }}">
+                    Đặt lại mật khẩu
+                  </a>
+                  <form method="post" action="{{ url_for('admin_user_delete', user_id=user.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-outline-danger"
+                            data-confirm="Xoá vĩnh viễn tài khoản {{ user.full_name }}?"
+                            {% if user.booking_count %}
+                              title="Tài khoản đã có lịch đặt, không xoá được"
+                            {% endif %}>Xoá</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty_state('Chưa có tài khoản nào', 'Hãy thêm tài khoản đầu tiên.', '👤') }}
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

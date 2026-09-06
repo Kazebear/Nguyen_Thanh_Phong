@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% from "_macros.html" import room_card, status_badge, empty_state %}
+
+{% block title %}Danh sách phòng họp · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Danh sách phòng họp</h1>
+    <p class="text-muted mb-0">Kiểm tra phòng trống theo khung giờ hoặc duyệt toàn bộ phòng của văn phòng.</p>
+  </div>
+</div>
+
+{# --------------------------- Kiểm tra phòng trống --------------------------- #}
+<section class="panel mb-4" id="availability">
+  <div class="panel-head">
+    <h2>Kiểm tra phòng trống theo khung giờ</h2>
+  </div>
+
+  <form class="row g-3 needs-check" id="availabilityForm" method="get"
+        action="{{ url_for('rooms') }}#availability" novalidate>
+    <input type="hidden" name="check" value="1">
+    <input type="hidden" name="floor" value="{{ filters.floor }}">
+    <input type="hidden" name="min_capacity" value="{{ filters.min_capacity }}">
+    <input type="hidden" name="status" value="{{ filters.status }}">
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <label class="form-label" for="date">Ngày cần đặt <span class="req">*</span></label>
+      <input type="date" class="form-control {% if errors.date %}is-invalid{% endif %}"
+             id="date" name="date" value="{{ search.date }}" min="{{ today }}" required>
+      <div class="invalid-feedback" data-field="date">{{ errors.date or 'Vui lòng chọn ngày họp.' }}</div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label" for="start_time">Giờ bắt đầu <span class="req">*</span></label>
+      <input type="time" class="form-control {% if errors.start_time %}is-invalid{% endif %}"
+             id="start_time" name="start_time" value="{{ search.start_time }}"
+             min="{{ booking_min_time }}" max="{{ booking_max_time }}" required>
+      <div class="invalid-feedback" data-field="start_time">{{ errors.start_time or 'Vui lòng nhập giờ bắt đầu.' }}</div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+      <label class="form-label" for="end_time">Giờ kết thúc <span class="req">*</span></label>
+      <input type="time" class="form-control {% if errors.end_time %}is-invalid{% endif %}"
+             id="end_time" name="end_time" value="{{ search.end_time }}"
+             min="{{ booking_min_time }}" max="{{ booking_max_time }}" required>
+      <div class="invalid-feedback" data-field="end_time">{{ errors.end_time or 'Giờ kết thúc phải lớn hơn giờ bắt đầu.' }}</div>
+    </div>
+    <div class="col-12 col-md-4 col-lg-2">
+      <label class="form-label" for="attendees">Số người <span class="req">*</span></label>
+      <input type="number" class="form-control {% if errors.attendees %}is-invalid{% endif %}"
+             id="attendees" name="attendees" min="1" step="1"
+             value="{{ search.attendees }}" required>
+      <div class="invalid-feedback" data-field="attendees">{{ errors.attendees or 'Số người phải lớn hơn 0.' }}</div>
+    </div>
+    <div class="col-12 col-md-4 col-lg-3 d-flex align-items-end gap-2">
+      <button type="submit" class="btn btn-primary flex-grow-1 text-nowrap" id="checkBtn">
+        <span class="btn-text">Tìm phòng trống</span>
+        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+      </button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('rooms') }}">Xoá</a>
+    </div>
+    <div class="col-12">
+      <p class="form-text mt-0">
+        Chỉ nhận đặt trong khung {{ booking_min_time }}–{{ booking_max_time }},
+        mỗi lịch tối thiểu 15 phút và tối đa 4 giờ.
+      </p>
+    </div>
+  </form>
+
+  <div id="availabilityResults" class="mt-4">
+    {% if availability %}
+      <div class="result-head">
+        <h3 class="h6 mb-0">
+          Kết quả cho ngày {{ availability.criteria.date }},
+          {{ availability.criteria.start_time }} – {{ availability.criteria.end_time }},
+          {{ availability.criteria.attendees }} người
+        </h3>
+        <span class="badge text-bg-light">{{ availability.rooms | length }} phòng</span>
+      </div>
+      {% if availability.rooms %}
+        <div class="row g-3 mt-1">
+          {% for room in availability.rooms %}
+            {{ room_card(room, book_url=url_for('book', room_id=room.id,
+                                                date=availability.criteria.date,
+                                                start_time=availability.criteria.start_time,
+                                                end_time=availability.criteria.end_time,
+                                                attendees=availability.criteria.attendees)) }}
+          {% endfor %}
+        </div>
+      {% else %}
+        {% set suggestions = availability.suggestions %}
+        {% if suggestions and (suggestions.rooms or suggestions.nearest_starts) %}
+          <div class="suggestion-box mt-3">
+            {% if suggestions.rooms %}
+              <p class="mb-2"><strong>Phòng trống gần khung giờ này:</strong></p>
+              <ul class="suggestion-list">
+                {% for opt in suggestions.rooms %}
+                  <li>
+                    <a href="{{ url_for('book', room_id=opt.room.id, date=availability.criteria.date,
+                                        start_time=opt.book_start, end_time=opt.book_end,
+                                        attendees=availability.criteria.attendees) }}">
+                      {{ opt.room.name }} trống {{ opt.start_time }}–{{ opt.end_time }}
+                    </a>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if suggestions.nearest_starts %}
+              <p class="mb-2"><strong>Khung giờ gần nhất còn trống:</strong></p>
+              <div class="d-flex flex-wrap gap-2">
+                {% for slot in suggestions.nearest_starts %}
+                  <a class="btn btn-outline-primary btn-sm"
+                     href="{{ url_for('rooms', check=1, date=availability.criteria.date,
+                                      start_time=slot.start_time, end_time=slot.end_time,
+                                      attendees=availability.criteria.attendees,
+                                      floor=filters.floor, min_capacity=filters.min_capacity,
+                                      status=filters.status) }}#availability">
+                    {{ slot.start_time }}
+                  </a>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+        {{ empty_state('Không có phòng nào phù hợp',
+                       'Không tìm thấy phòng còn trống đáp ứng sức chứa trong khung giờ này. Hãy thử khung giờ khác hoặc giảm số người.', '🔍') }}
+      {% endif %}
+    {% endif %}
+  </div>
+</section>
+
+{# ------------------------------ Toàn bộ phòng ------------------------------ #}
+<section class="panel">
+  <div class="panel-head">
+    <h2>Toàn bộ phòng họp ({{ rooms | length }})</h2>
+  </div>
+
+  <form class="row g-3 mb-4" id="filterForm" method="get" action="{{ url_for('rooms') }}">
+    <div class="col-6 col-md-3">
+      <label class="form-label" for="floor">Tầng</label>
+      <select class="form-select" id="floor" name="floor">
+        <option value="">Tất cả</option>
+        {% for f in floors %}
+          <option value="{{ f }}" {% if filters.floor == f | string %}selected{% endif %}>Tầng {{ f }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-3">
+      <label class="form-label" for="min_capacity">Sức chứa tối thiểu</label>
+      <input type="number" class="form-control" id="min_capacity" name="min_capacity"
+             min="1" step="1" placeholder="vd: 8" value="{{ filters.min_capacity }}">
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="status">Trạng thái</label>
+      <select class="form-select" id="status" name="status">
+        <option value="">Tất cả</option>
+        <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Đang hoạt động</option>
+        <option value="maintenance" {% if filters.status == 'maintenance' %}selected{% endif %}>Đang bảo trì</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-3 d-flex align-items-end gap-2">
+      <button type="submit" class="btn btn-outline-primary flex-grow-1">Lọc</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('rooms') }}">Đặt lại</a>
+    </div>
+  </form>
+
+  {% if rooms %}
+    <div class="row g-3">
+      {% for room in rooms %}
+        {{ room_card(room) }}
+      {% endfor %}
+    </div>
+  {% else %}
+    {{ empty_state('Không có phòng phù hợp bộ lọc',
+                   'Hãy nới lỏng điều kiện lọc để xem thêm phòng.', '🏢') }}
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/availability.js') }}"></script>
+{% endblock %}

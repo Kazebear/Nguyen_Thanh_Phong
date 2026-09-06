@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "_macros.html" import state_badge, empty_state %}
+
+{% block title %}Lịch sử đặt phòng · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Lịch sử đặt phòng</h1>
+    <p class="text-muted mb-0">Toàn bộ lịch đặt, sắp xếp theo ngày gần nhất.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('rooms') }}#availability">+ Đặt phòng mới</a>
+</div>
+
+<section class="panel mb-4">
+  <form class="row g-3" id="historyFilter" method="get" action="{{ url_for('history') }}">
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="date">Ngày</label>
+      <input type="date" class="form-control" id="date" name="date" value="{{ filters.date }}">
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="room_id">Phòng họp</label>
+      <select class="form-select" id="room_id" name="room_id">
+        <option value="">Tất cả</option>
+        {% for r in rooms %}
+          <option value="{{ r.id }}" {% if filters.room_id == r.id %}selected{% endif %}>{{ r.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="department">Phòng ban</label>
+      <select class="form-select" id="department" name="department">
+        <option value="">Tất cả</option>
+        {% for d in departments %}
+          <option value="{{ d }}" {% if filters.department == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="booked_by">Người đặt</label>
+      <input type="text" class="form-control" id="booked_by" name="booked_by"
+             value="{{ filters.booked_by }}" placeholder="Nhập tên...">
+    </div>
+    <div class="col-12 d-flex gap-2">
+      <button type="submit" class="btn btn-outline-primary">Lọc</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('history') }}">Đặt lại</a>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Danh sách booking ({{ bookings | length }})</h2>
+  </div>
+
+  {% if bookings %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 booking-table">
+        <thead>
+          <tr>
+            <th>Mã booking</th><th>Phòng họp</th><th>Ngày họp</th><th>Khung giờ</th>
+            <th>Người đặt</th><th>Phòng ban</th><th>Mục đích</th><th>Trạng thái</th>
+            <th class="text-end">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bk in bookings %}
+            <tr class="{% if highlight == bk.id %}row-highlight{% endif %}
+                       {% if bk.status == 'cancelled' %}row-cancelled{% endif %}">
+              <td>
+                <a href="{{ url_for('booking_detail', booking_id=bk.id) }}"
+                   title="Xem chi tiết và lịch sử thay đổi"><code>{{ bk.id }}</code></a>
+              </td>
+              <td>{{ bk.room_name }}</td>
+              <td>{{ bk.date }}</td>
+              <td class="text-nowrap">{{ bk.start_time }} – {{ bk.end_time }}</td>
+              <td>{{ bk.booked_by }}</td>
+              <td>{{ bk.department }}</td>
+              <td>{{ bk.purpose }}</td>
+              <td>{{ state_badge(bk) }}</td>
+              <td class="text-end text-nowrap">
+                {% if bk.editable and (is_admin or (current_user and current_user.id == bk.user_id)) %}
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{{ url_for('booking_edit', booking_id=bk.id) }}">Sửa</a>
+                  <a class="btn btn-sm btn-outline-danger"
+                     href="{{ url_for('booking_cancel', booking_id=bk.id) }}">Huỷ</a>
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty_state('Không có lịch đặt nào',
+                   'Không tìm thấy booking phù hợp với bộ lọc hiện tại.', '📋') }}
+  {% endif %}
+</section>
+{% endblock %}

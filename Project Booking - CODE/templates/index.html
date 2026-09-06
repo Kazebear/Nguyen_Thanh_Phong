@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% from "_macros.html" import state_badge, empty_state, room_grid_row %}
+
+{% block title %}Trang chủ · {{ app_name }}{% endblock %}
+
+{% block content %}
+<section class="hero mb-4">
+  <div>
+    <h1>Đặt phòng họp nhanh chóng</h1>
+    <p>Xem tình trạng phòng, kiểm tra khung giờ trống và tạo lịch họp chỉ trong vài bước.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary btn-lg" href="{{ url_for('rooms') }}">Danh sách phòng họp</a>
+      <a class="btn btn-outline-light btn-lg" href="{{ url_for('history') }}">Lịch sử đặt phòng</a>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Phòng đang hoạt động</span>
+      <span class="stat-value">{{ stats.active_rooms }}</span>
+      <span class="stat-hint">{{ stats.maintenance_rooms }} phòng đang bảo trì</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Tổng lượt đặt phòng</span>
+      <span class="stat-value">{{ stats.total_bookings }}</span>
+      <span class="stat-hint">Toàn bộ lịch sử</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Lịch đặt hôm nay</span>
+      <span class="stat-value">{{ stats.today_bookings }}</span>
+      <span class="stat-hint">Ngày {{ stats.today }}</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card stat-card-action">
+      <span class="stat-label">Cần phòng gấp?</span>
+      <a class="btn btn-primary w-100 mt-2"
+         href="{{ url_for('rooms', check=1, date=quick.date, start_time=quick.start_time, end_time=quick.end_time, attendees=1) }}#availability">
+        Đặt nhanh phòng trống bây giờ
+      </a>
+      <span class="stat-hint">
+        {% if quick.date != stats.today %}Ngày mai, {% endif %}{{ quick.start_time }}–{{ quick.end_time }}
+      </span>
+    </div>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-head flex-wrap">
+    <h2>Lịch phòng theo ngày</h2>
+    <span class="text-muted small">khung giờ {{ hour_marks[0].label }}–{{ hour_marks[-1].label }}</span>
+  </div>
+
+  <div class="grid-date-nav">
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index', date=prev_day) }}"
+       title="Ngày trước">‹</a>
+    <a class="btn btn-outline-secondary btn-sm {% if is_today %}disabled{% endif %}"
+       href="{{ url_for('index') }}">Hôm nay</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('index', date=next_day) }}"
+       title="Ngày sau">›</a>
+
+    <form class="d-flex align-items-center gap-2" method="get" action="{{ url_for('index') }}">
+      <input type="date" class="form-control form-control-sm" name="date" value="{{ selected_day }}"
+             aria-label="Chọn ngày xem lịch">
+      <button type="submit" class="btn btn-outline-primary btn-sm">Xem</button>
+    </form>
+
+    <strong class="ms-auto grid-date-label">
+      {{ selected_day }} {% if is_today %}<span class="badge text-bg-light">Hôm nay</span>{% endif %}
+    </strong>
+  </div>
+
+  {% if room_schedule %}
+    <div class="room-grid-scroll" id="roomGrid" data-date="{{ selected_day }}">
+      <div class="room-grid">
+        <div class="room-grid-label"></div>
+        <div class="room-grid-track hour-marks">
+          {% for mark in hour_marks %}
+            <span class="hour-mark" style="left: {{ mark.pct }}%">{{ mark.label }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if floor_groups %}
+        {% for group in floor_groups %}
+          <details class="floor-group" open>
+            <summary>
+              Tầng {{ group.floor }}
+              <span class="text-muted small">({{ group.rooms | length }} phòng)</span>
+            </summary>
+            <div class="room-grid">
+              {% for room in group.rooms %}
+                {{ room_grid_row(room, now_pct) }}
+              {% endfor %}
+            </div>
+          </details>
+        {% endfor %}
+      {% else %}
+        <div class="room-grid">
+          {% for room in room_schedule %}
+            {{ room_grid_row(room, now_pct) }}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    <p class="text-muted small mb-0 mt-2">
+      Ô màu là lịch đã đặt (đưa chuột vào để xem chi tiết) · bấm vào ô trống để đặt nhanh khung giờ đó
+      {% if now_pct is not none %}· vạch đỏ là giờ hiện tại{% endif %}
+      {% if floor_groups %}· bấm vào tên tầng để thu gọn/mở rộng{% endif %}.
+    </p>
+  {% else %}
+    {{ empty_state('Chưa có phòng nào', 'Hãy thêm phòng họp trong khu quản trị.', '🏢') }}
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Lịch họp sắp tới</h2>
+    <a class="link-more" href="{{ url_for('history') }}">Xem tất cả →</a>
+  </div>
+
+  {% if upcoming %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Phòng</th><th>Ngày</th><th>Khung giờ</th>
+            <th>Người đặt</th><th>Mục đích</th><th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bk in upcoming %}
+            <tr>
+              <td>
+                <a href="{{ url_for('booking_detail', booking_id=bk.id) }}"><code>{{ bk.id }}</code></a>
+              </td>
+              <td>{{ bk.room_name }}</td>
+              <td>{{ bk.date }}</td>
+              <td>{{ bk.start_time }} – {{ bk.end_time }}</td>
+              <td>{{ bk.booked_by }}</td>
+              <td class="text-truncate" style="max-width: 240px">{{ bk.purpose }}</td>
+              <td>{{ state_badge(bk) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty_state('Chưa có lịch họp sắp tới',
+                   'Hãy tạo lịch đặt phòng đầu tiên từ trang Danh sách phòng họp.', '🗓️') }}
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/home-grid.js') }}"></script>
+{% endblock %}

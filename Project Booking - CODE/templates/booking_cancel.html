@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import state_badge %}
+
+{% block title %}Huỷ lịch {{ booking.id }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="page-head">
+      <div>
+        <h1>Huỷ lịch đặt</h1>
+        <p class="text-muted mb-0">Kiểm tra lại thông tin trước khi xác nhận huỷ.</p>
+      </div>
+      <a class="btn btn-outline-secondary" href="{{ url_for('history') }}">← Về lịch sử</a>
+    </div>
+
+    {% if not booking.cancellable or errors._ %}
+      <div class="alert alert-warning">
+        {% if errors._ %}
+          {{ errors._ }}
+        {% elif booking.status == 'cancelled' %}
+          Lịch này đã được huỷ trước đó.
+        {% else %}
+          Cuộc họp đã kết thúc nên không thể huỷ.
+        {% endif %}
+        <a href="{{ url_for('history') }}">Quay lại lịch sử đặt phòng</a>.
+      </div>
+    {% else %}
+
+      <section class="panel">
+        <ul class="room-meta">
+          <li><span>Mã booking</span><strong>{{ booking.id }}</strong></li>
+          <li><span>Phòng họp</span><strong>{{ booking.room_name }}</strong></li>
+          <li><span>Ngày họp</span><strong>{{ booking.date }}</strong></li>
+          <li><span>Khung giờ</span><strong>{{ booking.start_time }} – {{ booking.end_time }}</strong></li>
+          <li><span>Người đặt</span><strong>{{ booking.booked_by }}</strong></li>
+          <li><span>Phòng ban</span><strong>{{ booking.department }}</strong></li>
+          <li><span>Mục đích</span><strong>{{ booking.purpose }}</strong></li>
+          <li><span>Trạng thái</span><strong>{{ state_badge(booking) }}</strong></li>
+        </ul>
+
+        <div class="alert alert-warning mt-3">
+          Sau khi huỷ, khung giờ này được trả lại cho người khác đặt.
+          Bản ghi vẫn được giữ trong lịch sử với trạng thái <strong>Đã huỷ</strong>.
+        </div>
+
+        <form method="post" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          {% if is_admin %}
+            <p class="text-muted small">🔧 Bạn đang huỷ với quyền quản trị viên.</p>
+          {% else %}
+            <p class="text-muted small">
+              👤 Bạn đang huỷ với tư cách <strong>{{ current_user.full_name }}</strong>.
+            </p>
+          {% endif %}
+
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-danger btn-lg">Xác nhận huỷ lịch</button>
+            <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('history') }}">Không huỷ nữa</a>
+            {% if booking.editable %}
+              <a class="btn btn-outline-primary btn-lg ms-auto"
+                 href="{{ url_for('booking_edit', booking_id=booking.id) }}">Sửa thay vì huỷ</a>
+            {% endif %}
+          </div>
+        </form>
+      </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, state_badge %}
+
+{% block title %}Sửa lịch {{ booking.id }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Sửa lịch đặt {{ booking.id }}</h1>
+    <p class="text-muted mb-0">Hệ thống sẽ kiểm tra lại tình trạng phòng trước khi lưu thay đổi.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('history') }}">← Về lịch sử</a>
+</div>
+
+{% if not booking.editable or errors._ %}
+  <div class="alert alert-warning">
+    {% if errors._ %}
+      {{ errors._ }}
+    {% elif booking.status == 'cancelled' %}
+      Lịch này đã được huỷ nên không thể sửa.
+    {% else %}
+      Cuộc họp đã kết thúc nên không thể sửa.
+    {% endif %}
+    <a href="{{ url_for('history') }}">Quay lại lịch sử đặt phòng</a>.
+  </div>
+{% else %}
+
+{% if errors.conflict %}
+  <div class="alert alert-danger">{{ errors.conflict }}</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <section class="panel">
+      <form id="bookingForm" method="post" novalidate data-check-past="false">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="confirm-box mb-4">
+          {% if is_admin %}
+            <p class="mb-0">🔧 Bạn đang sửa với quyền <strong>quản trị viên</strong>.</p>
+          {% else %}
+            <p class="mb-0">
+              👤 Bạn đang sửa với tư cách <strong>{{ current_user.full_name }}</strong>.
+            </p>
+          {% endif %}
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label" for="room_id">Phòng họp <span class="req">*</span></label>
+            <select class="form-select {% if errors.room_id %}is-invalid{% endif %}"
+                    id="room_id" name="room_id" required>
+              {% set listed = rooms | map(attribute='id') | list %}
+              {% if booking.room_id not in listed %}
+                <option value="{{ booking.room_id }}" selected>
+                  {{ booking.room_name }} (phòng hiện tại, đang bảo trì)
+                </option>
+              {% endif %}
+              {% for r in rooms %}
+                <option value="{{ r.id }}" data-capacity="{{ r.capacity }}"
+                        {% if form.room_id == r.id %}selected{% endif %}>
+                  {{ r.name }} · Tầng {{ r.floor }} · {{ r.capacity }} người
+                </option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback" data-field="room_id">{{ errors.room_id or 'Vui lòng chọn phòng họp.' }}</div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="date">Ngày họp <span class="req">*</span></label>
+            <input type="date" class="form-control {% if errors.date %}is-invalid{% endif %}"
+                   id="date" name="date" value="{{ form.date }}" min="{{ today }}" required>
+            <div class="invalid-feedback" data-field="date">{{ errors.date or 'Vui lòng chọn ngày họp.' }}</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label" for="start_time">Giờ bắt đầu <span class="req">*</span></label>
+            <input type="time" class="form-control {% if errors.start_time %}is-invalid{% endif %}"
+                   id="start_time" name="start_time" value="{{ form.start_time }}"
+                   min="{{ booking_min_time }}" max="{{ booking_max_time }}" required>
+            <div class="invalid-feedback" data-field="start_time">{{ errors.start_time or 'Vui lòng nhập giờ bắt đầu.' }}</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label" for="end_time">Giờ kết thúc <span class="req">*</span></label>
+            <input type="time" class="form-control {% if errors.end_time %}is-invalid{% endif %}"
+                   id="end_time" name="end_time" value="{{ form.end_time }}"
+                   min="{{ booking_min_time }}" max="{{ booking_max_time }}" required>
+            <div class="invalid-feedback" data-field="end_time">{{ errors.end_time or 'Giờ kết thúc phải lớn hơn giờ bắt đầu.' }}</div>
+          </div>
+          <div class="col-12">
+            <p class="form-text mt-0">
+              Chỉ nhận đặt trong khung {{ booking_min_time }}–{{ booking_max_time }},
+              mỗi lịch tối thiểu 15 phút và tối đa 4 giờ.
+            </p>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="booked_by">Người đặt <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.booked_by %}is-invalid{% endif %}"
+                   id="booked_by" name="booked_by" value="{{ form.booked_by }}"
+                   maxlength="255" required>
+            <div class="invalid-feedback" data-field="booked_by">{{ errors.booked_by or 'Vui lòng nhập người đặt.' }}</div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="department">Phòng ban <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.department %}is-invalid{% endif %}"
+                   id="department" name="department" value="{{ form.department }}"
+                   maxlength="255" required>
+            <div class="invalid-feedback" data-field="department">{{ errors.department or 'Vui lòng nhập phòng ban.' }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label" for="purpose">Mục đích cuộc họp <span class="req">*</span></label>
+            <textarea class="form-control {% if errors.purpose %}is-invalid{% endif %}"
+                      id="purpose" name="purpose" rows="3" maxlength="255"
+                      required>{{ form.purpose }}</textarea>
+            <div class="invalid-feedback" data-field="purpose">{{ errors.purpose or 'Vui lòng nhập mục đích cuộc họp.' }}</div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4 flex-wrap">
+          <button type="submit" class="btn btn-primary btn-lg" id="submitBooking">
+            <span class="btn-text">Lưu thay đổi</span>
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+          </button>
+          <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('history') }}">Huỷ bỏ</a>
+          <a class="btn btn-outline-danger btn-lg ms-auto"
+             href="{{ url_for('booking_cancel', booking_id=booking.id) }}">Huỷ lịch này</a>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <section class="panel">
+      <h2 class="h6">Thông tin hiện tại</h2>
+      <ul class="room-meta">
+        <li><span>Mã booking</span><strong>{{ booking.id }}</strong></li>
+        <li><span>Phòng</span><strong>{{ booking.room_name }}</strong></li>
+        <li><span>Ngày</span><strong>{{ booking.date }}</strong></li>
+        <li><span>Khung giờ</span><strong>{{ booking.start_time }} – {{ booking.end_time }}</strong></li>
+        <li><span>Người đặt</span><strong>{{ booking.booked_by }}</strong></li>
+        <li><span>Phòng ban</span><strong>{{ booking.department }}</strong></li>
+        <li><span>Trạng thái</span><strong>{{ state_badge(booking) }}</strong></li>
+      </ul>
+      <a class="link-more" href="{{ url_for('booking_detail', booking_id=booking.id) }}">
+        Xem chi tiết booking →
+      </a>
+    </section>
+
+    <section class="panel mt-3">
+      <h2 class="h6">Lịch đã đặt của phòng trong ngày</h2>
+      <div id="roomSchedule" class="schedule-list">
+        <p class="text-muted mb-0">Đang tải…</p>
+      </div>
+      <p class="form-text mb-0">Lịch đang sửa vẫn hiện trong danh sách này.</p>
+    </section>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, state_badge, empty_state %}
+
+{% block title %}Quản trị · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Bảng quản trị</h1>
+    <p class="text-muted mb-0">Quản lý phòng họp và các lịch đặt của toàn văn phòng.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin_users') }}">Quản lý tài khoản</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin_logs') }}">Nhật ký thay đổi</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin_bookings') }}">Quản lý booking</a>
+    <a class="btn btn-primary" href="{{ url_for('admin_room_new') }}">+ Thêm phòng</a>
+  </div>
+</div>
+
+<section class="row g-3 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Tổng số phòng</span>
+      <span class="stat-value">{{ stats.total_rooms }}</span>
+      <span class="stat-hint">{{ stats.active_rooms }} hoạt động · {{ stats.maintenance_rooms }} bảo trì</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Booking hiệu lực</span>
+      <span class="stat-value">{{ stats.total_bookings }}</span>
+      <span class="stat-hint">{{ stats.cancelled_bookings }} lịch đã huỷ</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Lịch hôm nay</span>
+      <span class="stat-value">{{ stats.today_bookings }}</span>
+      <span class="stat-hint">Ngày {{ stats.today }}</span>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="stat-card">
+      <span class="stat-label">Từ hôm nay trở đi</span>
+      <span class="stat-value">{{ stats.upcoming_count }}</span>
+      <span class="stat-hint">Lịch còn hiệu lực</span>
+    </div>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-head">
+    <h2>Danh sách phòng ({{ rooms | length }})</h2>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table align-middle mb-0 admin-table">
+      <thead>
+        <tr>
+          <th>Mã</th><th>Tên phòng</th><th>Tầng</th><th>Sức chứa</th>
+          <th>Thiết bị</th><th>Lịch đặt</th><th>Trạng thái</th><th class="text-end">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for room in rooms %}
+          <tr>
+            <td><code>{{ room.id }}</code></td>
+            <td class="fw-semibold">{{ room.name }}</td>
+            <td>{{ room.floor }}</td>
+            <td>{{ room.capacity }} người</td>
+            <td>
+              <div class="room-equipment">
+                {% for item in room.equipment %}<span class="chip">{{ item }}</span>
+                {% else %}<span class="text-muted small">—</span>{% endfor %}
+              </div>
+            </td>
+            <td>
+              {{ room.booking_count }} lịch
+              {% if room.upcoming_count %}
+                <span class="text-muted small d-block">{{ room.upcoming_count }} sắp tới</span>
+              {% endif %}
+            </td>
+            <td>{{ status_badge(room) }}</td>
+            <td>
+              <div class="d-flex gap-1 justify-content-end flex-wrap">
+                <a class="btn btn-sm btn-outline-primary"
+                   href="{{ url_for('admin_room_edit', room_id=room.id) }}">Sửa</a>
+
+                <form method="post" action="{{ url_for('admin_room_status', room_id=room.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status"
+                         value="{{ 'maintenance' if room.status == 'active' else 'active' }}">
+                  {% if room.status == 'active' %}
+                    <button class="btn btn-sm btn-outline-warning"
+                            {% if room.upcoming_count %}
+                            data-confirm="{{ room.name }} còn {{ room.upcoming_count }} lịch đã đặt sắp tới. Vẫn chuyển sang bảo trì?"
+                            {% endif %}>Bảo trì</button>
+                  {% else %}
+                    <button class="btn btn-sm btn-outline-success">Mở lại</button>
+                  {% endif %}
+                </form>
+
+                <form method="post" action="{{ url_for('admin_room_delete', room_id=room.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger"
+                          data-confirm="Xoá vĩnh viễn phòng {{ room.name }}?"
+                          {% if room.booking_count %}
+                            title="Phòng đã có lịch đặt, hãy chuyển sang bảo trì thay vì xoá"
+                          {% endif %}>Xoá</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-head">
+    <h2>Hoạt động gần đây</h2>
+    <a class="link-more" href="{{ url_for('admin_logs') }}">Xem toàn bộ nhật ký →</a>
+  </div>
+
+  {% if activity %}
+    <ol class="timeline">
+      {% for log in activity %}
+        <li class="timeline-item timeline-{{ log.action }}">
+          <div class="timeline-head">
+            <strong>{{ log.action_label }}</strong>
+            <time class="text-muted small">{{ log.created_at }}</time>
+          </div>
+          <div class="text-muted small mb-0">
+            bởi {{ log.actor }} ·
+            <a href="{{ url_for('admin_logs', booking_id=log.booking_id) }}">
+              <code>{{ log.booking_id }}</code></a>
+            {% if log.room_name %} · {{ log.room_name }}{% endif %}
+            {% if log.changes %}
+              · đổi {{ log.changes | map(attribute='label') | join(', ') | lower }}
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    {{ empty_state('Chưa có hoạt động nào', 'Hệ thống chưa ghi nhận thao tác nào.', '🕘') }}
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Booking gần nhất</h2>
+    <a class="link-more" href="{{ url_for('admin_bookings') }}">Quản lý tất cả →</a>
+  </div>
+
+  {% if recent %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr><th>Mã</th><th>Phòng</th><th>Ngày</th><th>Khung giờ</th>
+              <th>Người đặt</th><th>Trạng thái</th></tr>
+        </thead>
+        <tbody>
+          {% for bk in recent %}
+            <tr class="{% if bk.status == 'cancelled' %}row-cancelled{% endif %}">
+              <td>
+                <a href="{{ url_for('booking_detail', booking_id=bk.id) }}"><code>{{ bk.id }}</code></a>
+              </td>
+              <td>{{ bk.room_name }}</td>
+              <td>{{ bk.date }}</td>
+              <td class="text-nowrap">{{ bk.start_time }} – {{ bk.end_time }}</td>
+              <td>{{ bk.booked_by }}</td>
+              <td>{{ state_badge(bk) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty_state('Chưa có booking nào', 'Hệ thống chưa ghi nhận lịch đặt phòng.', '📋') }}
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

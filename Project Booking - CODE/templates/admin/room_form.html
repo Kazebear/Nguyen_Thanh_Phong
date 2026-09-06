@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Thêm phòng' if mode == 'new' else 'Sửa phòng' }} · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ 'Thêm phòng họp' if mode == 'new' else 'Sửa phòng ' ~ room.name }}</h1>
+    <p class="text-muted mb-0">
+      {{ 'Phòng mới sẽ xuất hiện ngay trên trang danh sách phòng.'
+         if mode == 'new' else 'Thay đổi được lưu vào database, hai file JSON gốc không bị ảnh hưởng.' }}
+    </p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('admin_dashboard') }}">← Quay lại</a>
+</div>
+
+{% if errors._ %}
+  <div class="alert alert-danger">{{ errors._ }}</div>
+{% endif %}
+
+{% if mode == 'edit' and upcoming_count %}
+  <div class="alert alert-info">
+    Phòng này còn <strong>{{ upcoming_count }}</strong> lịch đặt sắp tới. Giảm sức chứa hoặc
+    chuyển sang bảo trì sẽ không tự huỷ các lịch đó — hãy huỷ thủ công ở
+    <a href="{{ url_for('admin_bookings', room_id=room.id) }}">trang quản lý booking</a> nếu cần.
+  </div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <section class="panel">
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="id">Mã phòng <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.id %}is-invalid{% endif %}"
+                   id="id" name="id" value="{{ form.id }}" maxlength="20"
+                   placeholder="vd: R401" {% if mode == 'edit' %}readonly{% endif %} required>
+            <div class="form-text">
+              {{ 'Không đổi được sau khi tạo.' if mode == 'edit' else 'Chữ, số, gạch ngang hoặc gạch dưới.' }}
+            </div>
+            <div class="invalid-feedback">{{ errors.id }}</div>
+          </div>
+          <div class="col-12 col-md-8">
+            <label class="form-label" for="name">Tên phòng <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.name %}is-invalid{% endif %}"
+                   id="name" name="name" value="{{ form.name }}" maxlength="100"
+                   placeholder="vd: Phòng họp Hướng Dương" required>
+            <div class="invalid-feedback">{{ errors.name }}</div>
+          </div>
+
+          <div class="col-6 col-md-4">
+            <label class="form-label" for="floor">Tầng <span class="req">*</span></label>
+            <input type="number" class="form-control {% if errors.floor %}is-invalid{% endif %}"
+                   id="floor" name="floor" value="{{ form.floor }}" step="1" required>
+            <div class="invalid-feedback">{{ errors.floor }}</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <label class="form-label" for="capacity">Sức chứa <span class="req">*</span></label>
+            <input type="number" class="form-control {% if errors.capacity %}is-invalid{% endif %}"
+                   id="capacity" name="capacity" value="{{ form.capacity }}"
+                   min="1" max="500" step="1" required>
+            <div class="invalid-feedback">{{ errors.capacity }}</div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="status">Trạng thái</label>
+            <select class="form-select {% if errors.status %}is-invalid{% endif %}"
+                    id="status" name="status">
+              <option value="active" {% if form.status == 'active' %}selected{% endif %}>Đang hoạt động</option>
+              <option value="maintenance" {% if form.status == 'maintenance' %}selected{% endif %}>Đang bảo trì</option>
+            </select>
+            <div class="invalid-feedback">{{ errors.status }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label" for="equipment">Trang thiết bị</label>
+            <textarea class="form-control" id="equipment" name="equipment" rows="5"
+                      placeholder="Mỗi thiết bị một dòng:&#10;Máy chiếu&#10;Bảng trắng&#10;Wifi">{{ form.equipment }}</textarea>
+            <div class="form-text">Mỗi dòng một thiết bị. Thiết bị trùng nhau sẽ được gộp lại.</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label" for="image">Đường dẫn ảnh</label>
+            <input type="text" class="form-control {% if errors.image %}is-invalid{% endif %}"
+                   id="image" name="image" value="{{ form.image }}"
+                   placeholder="images/room-abc.jpg">
+            <div class="form-text">
+              Tương đối so với thư mục <code>static/</code>. Để trống nếu chưa có ảnh.
+            </div>
+            <div class="invalid-feedback">{{ errors.image }}</div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary btn-lg">
+            {{ 'Thêm phòng' if mode == 'new' else 'Lưu thay đổi' }}
+          </button>
+          <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('admin_dashboard') }}">Huỷ</a>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <section class="panel">
+      <h2 class="h6">Gợi ý</h2>
+      <ul class="small text-muted mb-0 ps-3">
+        <li class="mb-2">Phòng ở trạng thái <strong>bảo trì</strong> vẫn hiển thị trên trang danh
+          sách nhưng không thể đặt và không xuất hiện khi tìm phòng trống.</li>
+        <li class="mb-2">Phòng đã có lịch đặt trong lịch sử thì không xoá được, để không phá vỡ
+          ràng buộc khoá ngoại. Hãy chuyển sang bảo trì.</li>
+        <li>Thả file ảnh vào <code>static/images/</code> rồi điền đúng tên file ở ô đường dẫn ảnh.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

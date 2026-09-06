@@ -1,0 +1,20 @@
+[
+  {
+    "id": "U001",
+    "username": "an.nv",
+    "fullName": "Nguyễn Văn An",
+    "department": "Kinh doanh"
+  },
+  {
+    "id": "U002",
+    "username": "binh.tt",
+    "fullName": "Trần Thị Bình",
+    "department": "Marketing"
+  },
+  {
+    "id": "U003",
+    "username": "cuong.lm",
+    "fullName": "Lê Minh Cường",
+    "department": "Kỹ thuật"
+  }
+]

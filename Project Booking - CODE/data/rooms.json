@@ -1,0 +1,56 @@
+[
+  {
+    "id": "R101",
+    "name": "Phòng họp Sen",
+    "floor": 1,
+    "capacity": 6,
+    "equipment": ["TV màn hình", "Bảng trắng", "Wifi"],
+    "image": "images/room-sen.jpg",
+    "status": "active"
+  },
+  {
+    "id": "R102",
+    "name": "Phòng họp Mai",
+    "floor": 1,
+    "capacity": 4,
+    "equipment": ["Bảng trắng", "Wifi"],
+    "image": "images/room-mai.jpg",
+    "status": "active"
+  },
+  {
+    "id": "R201",
+    "name": "Phòng họp Cúc",
+    "floor": 2,
+    "capacity": 10,
+    "equipment": ["Máy chiếu", "Loa", "Micro", "Wifi"],
+    "image": "images/room-cuc.jpg",
+    "status": "active"
+  },
+  {
+    "id": "R202",
+    "name": "Phòng họp Lan",
+    "floor": 2,
+    "capacity": 8,
+    "equipment": ["TV màn hình", "Bảng trắng", "Camera hội nghị", "Wifi"],
+    "image": "images/room-lan.jpg",
+    "status": "active"
+  },
+  {
+    "id": "R301",
+    "name": "Phòng họp Đào (VIP)",
+    "floor": 3,
+    "capacity": 12,
+    "equipment": ["Máy chiếu", "Camera hội nghị", "Loa", "Micro", "Wifi"],
+    "image": "images/room-dao.jpg",
+    "status": "active"
+  },
+  {
+    "id": "R302",
+    "name": "Phòng họp Trúc",
+    "floor": 3,
+    "capacity": 4,
+    "equipment": ["Bảng trắng", "Wifi"],
+    "image": "images/room-truc.jpg",
+    "status": "maintenance"
+  }
+]

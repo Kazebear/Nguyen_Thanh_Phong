@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% from "_macros.html" import state_badge, empty_state %}
+
+{% block title %}Quản lý booking · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Quản lý booking</h1>
+    <p class="text-muted mb-0">Xem và huỷ các lịch đặt phòng. Lịch huỷ vẫn được giữ trong lịch sử.</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('admin_dashboard') }}">← Bảng quản trị</a>
+</div>
+
+<section class="panel mb-4">
+  <form class="row g-3" method="get" action="{{ url_for('admin_bookings') }}">
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="date">Ngày</label>
+      <input type="date" class="form-control" id="date" name="date" value="{{ filters.date }}">
+    </div>
+    <div class="col-12 col-md-3">
+      <label class="form-label" for="room_id">Phòng họp</label>
+      <select class="form-select" id="room_id" name="room_id">
+        <option value="">Tất cả</option>
+        {% for r in rooms %}
+          <option value="{{ r.id }}" {% if filters.room_id == r.id %}selected{% endif %}>{{ r.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-2">
+      <label class="form-label" for="department">Phòng ban</label>
+      <select class="form-select" id="department" name="department">
+        <option value="">Tất cả</option>
+        {% for d in departments %}
+          <option value="{{ d }}" {% if filters.department == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-2">
+      <label class="form-label" for="status">Tình trạng</label>
+      <select class="form-select" id="status" name="status">
+        <option value="">Tất cả</option>
+        <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Còn hiệu lực</option>
+        <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>Đã huỷ</option>
+      </select>
+    </div>
+    <div class="col-12 col-md-2">
+      <label class="form-label" for="booked_by">Người đặt</label>
+      <input type="text" class="form-control" id="booked_by" name="booked_by"
+             value="{{ filters.booked_by }}" placeholder="Nhập tên...">
+    </div>
+    <div class="col-12 d-flex gap-2">
+      <button type="submit" class="btn btn-outline-primary">Lọc</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_bookings') }}">Đặt lại</a>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Danh sách booking ({{ bookings | length }})</h2>
+  </div>
+
+  {% if bookings %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0 admin-table">
+        <thead>
+          <tr>
+            <th>Mã</th><th>Phòng họp</th><th>Ngày</th><th>Khung giờ</th>
+            <th>Người đặt</th><th>Phòng ban</th><th>Mục đích</th>
+            <th>Trạng thái</th><th class="text-end">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bk in bookings %}
+            <tr class="{% if bk.status == 'cancelled' %}row-cancelled{% endif %}">
+              <td>
+                <a href="{{ url_for('booking_detail', booking_id=bk.id) }}"
+                   title="Xem chi tiết và lịch sử thay đổi"><code>{{ bk.id }}</code></a>
+              </td>
+              <td>{{ bk.room_name }}</td>
+              <td>{{ bk.date }}</td>
+              <td class="text-nowrap">{{ bk.start_time }} – {{ bk.end_time }}</td>
+              <td>{{ bk.booked_by }}</td>
+              <td>{{ bk.department }}</td>
+              <td>{{ bk.purpose }}</td>
+              <td>{{ state_badge(bk) }}</td>
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm btn-outline-secondary"
+                   href="{{ url_for('admin_logs', booking_id=bk.id) }}"
+                   title="Xem nhật ký thay đổi">Nhật ký</a>
+                {% if bk.editable %}
+                  <a class="btn btn-sm btn-outline-primary"
+                     href="{{ url_for('booking_edit', booking_id=bk.id) }}">Sửa</a>
+                {% endif %}
+                {% if bk.cancellable %}
+                  <form method="post"
+                        action="{{ url_for('admin_booking_cancel', booking_id=bk.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="next" value="{{ request.full_path }}">
+                    <button class="btn btn-sm btn-outline-danger"
+                            data-confirm="Huỷ booking {{ bk.id }} của {{ bk.booked_by }} ({{ bk.date }} {{ bk.start_time }}–{{ bk.end_time }})?">
+                      Huỷ lịch
+                    </button>
+                  </form>
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {{ empty_state('Không có booking nào',
+                   'Không tìm thấy lịch đặt phù hợp với bộ lọc hiện tại.', '📋') }}
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

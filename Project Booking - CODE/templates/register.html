@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng ký tài khoản · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <section class="panel mt-4">
+      <div class="text-center mb-3">
+        <div class="empty-icon">📝</div>
+        <h1 class="h4 mb-1">Đăng ký tài khoản</h1>
+        <p class="text-muted small mb-0">
+          Tạo tài khoản nhân viên để tự đặt phòng, sửa và huỷ lịch của mình.
+        </p>
+      </div>
+
+      {% if errors._ %}
+        <div class="alert alert-danger" role="alert">{{ errors._ }}</div>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('register') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="full_name">Họ tên <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.full_name %}is-invalid{% endif %}"
+                   id="full_name" name="full_name" value="{{ form.full_name }}"
+                   maxlength="100" placeholder="vd: Nguyễn Văn An" autofocus required>
+            <div class="invalid-feedback">{{ errors.full_name }}</div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="department">Phòng ban <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.department %}is-invalid{% endif %}"
+                   id="department" name="department" value="{{ form.department }}"
+                   maxlength="100" list="departmentOptions" placeholder="vd: Kinh doanh" required>
+            <datalist id="departmentOptions">
+              <option value="Kinh doanh"></option>
+              <option value="Marketing"></option>
+              <option value="Kỹ thuật"></option>
+              <option value="Nhân sự"></option>
+              <option value="Kế toán"></option>
+              <option value="Ban Giám đốc"></option>
+            </datalist>
+            <div class="invalid-feedback">{{ errors.department }}</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label" for="username">Tên đăng nhập <span class="req">*</span></label>
+            <input type="text" class="form-control {% if errors.username %}is-invalid{% endif %}"
+                   id="username" name="username" value="{{ form.username }}"
+                   maxlength="30" placeholder="vd: an.nv" autocomplete="username" required>
+            <div class="form-text">
+              Bắt đầu bằng chữ cái, chỉ gồm chữ thường, số, dấu chấm, gạch ngang hoặc gạch dưới.
+            </div>
+            <div class="invalid-feedback">{{ errors.username }}</div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="password">Mật khẩu <span class="req">*</span></label>
+            <input type="password" class="form-control {% if errors.password %}is-invalid{% endif %}"
+                   id="password" name="password" autocomplete="new-password" required>
+            <div class="form-text">Ít nhất 6 ký tự.</div>
+            <div class="invalid-feedback">{{ errors.password }}</div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="confirm_password">Nhập lại mật khẩu <span class="req">*</span></label>
+            <input type="password"
+                   class="form-control {% if errors.confirm_password %}is-invalid{% endif %}"
+                   id="confirm_password" name="confirm_password"
+                   autocomplete="new-password" required>
+            <div class="invalid-feedback">{{ errors.confirm_password }}</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-4">Đăng ký</button>
+      </form>
+
+      <p class="text-center small text-muted mt-3 mb-0">
+        Đã có tài khoản?
+        <a href="{{ url_for('login', next=next) }}">Đăng nhập</a>
+      </p>
+    </section>
+  </div>
+</div>
+{% endblock %}

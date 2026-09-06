@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Về chúng tôi · {{ app_name }}{% endblock %}
+
+{% block content %}
+<section class="hero mb-4">
+  <div>
+    <h1>Về chúng tôi</h1>
+    <p>Office Booking là hệ thống quản lý và đặt phòng họp nội bộ, giúp nhân viên
+      tìm phòng trống và đặt lịch chỉ trong vài bước, không còn trùng lịch hay
+      tranh chấp phòng họp.</p>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-head">
+    <h2>Office Booking là gì?</h2>
+  </div>
+  <p class="mb-0">
+    Đây là website nội bộ dành cho nhân viên công ty: xem lịch tất cả phòng họp
+    theo ngày, kiểm tra khung giờ còn trống, đặt lịch mới, và quản lý các lịch
+    đã đặt của chính mình. Quản trị viên có thêm công cụ riêng để quản lý danh
+    sách phòng, tài khoản nhân viên và theo dõi toàn bộ nhật ký thay đổi.
+  </p>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-head">
+    <h2>Tính năng chính</h2>
+  </div>
+  <div class="row g-3">
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="stat-card h-100">
+        <span class="stat-label">Lịch theo ngày</span>
+        <p class="mb-0 mt-2">Xem lịch tất cả phòng họp trên một lưới trực quan,
+          đổi ngày xem chỉ với một cú bấm.</p>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="stat-card h-100">
+        <span class="stat-label">Kiểm tra phòng trống</span>
+        <p class="mb-0 mt-2">Nhập khung giờ cần họp, hệ thống lọc ngay các
+          phòng còn trống, kèm gợi ý khung giờ gần nhất nếu hết phòng.</p>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="stat-card h-100">
+        <span class="stat-label">Đặt nhanh</span>
+        <p class="mb-0 mt-2">Cần phòng gấp? Một nút bấm tự điền sẵn khung giờ
+          30 phút tới và hiện luôn phòng trống.</p>
+      </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="stat-card h-100">
+        <span class="stat-label">Quản trị &amp; nhật ký</span>
+        <p class="mb-0 mt-2">Quản lý phòng, tài khoản nhân viên, và nhật ký
+          thay đổi đầy đủ cho mọi thao tác trên hệ thống.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="panel mb-4">
+  <div class="panel-head">
+    <h2>Công nghệ sử dụng</h2>
+  </div>
+  <ul class="mb-0">
+    <li><strong>Backend:</strong> Python (Flask)</li>
+    <li><strong>Cơ sở dữ liệu:</strong> SQLite</li>
+    <li><strong>Giao diện:</strong> Jinja2 + Bootstrap 5</li>
+    <li><strong>JavaScript:</strong> thuần, tăng cường trải nghiệm nhưng mọi
+      chức năng vẫn hoạt động khi tắt JavaScript</li>
+  </ul>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Văn phòng</h2>
+  </div>
+  <p>21-23 Nguyễn Biểu, Quận 5, TP. Hồ Chí Minh</p>
+  <iframe
+    class="map-embed"
+    src="https://www.google.com/maps?q=21-23%20Nguy%E1%BB%85n%20Bi%E1%BB%83u%2C%20Qu%E1%BA%ADn%205%2C%20TP.%20H%E1%BB%93%20Ch%C3%AD%20Minh&output=embed"
+    loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade"
+    title="Bản đồ vị trí văn phòng"></iframe>
+</section>
+{% endblock %}

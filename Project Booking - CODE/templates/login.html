@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng nhập · {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center g-4">
+  <div class="col-12 col-md-8 col-lg-5">
+    <section class="panel">
+      <div class="text-center mb-3">
+        <div class="empty-icon">👤</div>
+        <h1 class="h4 mb-1">Đăng nhập</h1>
+        <p class="text-muted small mb-0">Đăng nhập để đặt phòng họp.</p>
+      </div>
+
+      {% if errors._ %}
+        <div class="alert alert-danger" role="alert">{{ errors._ }}</div>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('login') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="mb-3">
+          <label class="form-label" for="username">Tên đăng nhập</label>
+          <input type="text" class="form-control {% if errors.username %}is-invalid{% endif %}"
+                 id="username" name="username" value="{{ username }}"
+                 autocomplete="username" autofocus required>
+          <div class="invalid-feedback">{{ errors.username }}</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="password">Mật khẩu</label>
+          <input type="password" class="form-control {% if errors.password %}is-invalid{% endif %}"
+                 id="password" name="password" autocomplete="current-password" required>
+          <div class="invalid-feedback">{{ errors.password }}</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+      </form>
+
+      <p class="text-center small text-muted mt-3 mb-0">
+        Chưa có tài khoản?
+        <a href="{{ url_for('register', next=next) }}">Đăng ký ngay</a>
+      </p>
+    </section>
+  </div>
+
+  <div class="col-12 col-md-8 col-lg-5">
+    <section class="panel">
+      <h2 class="h6">Tài khoản có sẵn</h2>
+      <p class="text-muted small">
+        Bấm vào một tài khoản để điền nhanh, sau đó nhập mật khẩu.
+      </p>
+
+      <div class="d-grid gap-2">
+        {% for user in users %}
+          <button type="button" class="account-pick" data-username="{{ user.username }}">
+            <span class="account-avatar">{{ user.full_name[:1] }}</span>
+            <span class="account-info">
+              <strong>{{ user.full_name }}</strong>
+              <span class="text-muted small d-block">
+                {{ user.department }} · <code>{{ user.username }}</code>
+              </span>
+            </span>
+          </button>
+        {% else %}
+          <p class="text-muted mb-0">Chưa có tài khoản nào trong hệ thống.</p>
+        {% endfor %}
+      </div>
+
+      {% if default_password == '123456' %}
+        <div class="alert alert-warning mt-3 mb-0 small">
+          Các tài khoản mẫu đang dùng mật khẩu mặc định <code>123456</code>.
+          Khi triển khai thật, hãy đặt biến môi trường
+          <code>DEFAULT_USER_PASSWORD</code> trước lần chạy đầu tiên.
+        </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %}
