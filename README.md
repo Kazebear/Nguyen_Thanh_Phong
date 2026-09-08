@@ -1,4 +1,8 @@
-<img src="Project%20Booking%20-%20CODE/static/images/logo.svg" alt="Office Booking" width="280">
+<picture>
+  <source media="(prefers-color-scheme: dark)"
+          srcset="Project%20Booking%20-%20CODE/static/images/logo-dark.svg">
+  <img src="Project%20Booking%20-%20CODE/static/images/logo.svg" alt="Office Booking" width="280">
+</picture>
 
 **Hệ thống đặt phòng họp nội bộ** — Flask · SQLite · Jinja2 · Bootstrap 5
 
