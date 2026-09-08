@@ -3,6 +3,16 @@
 Website nội bộ quản lý và đặt phòng họp cho văn phòng công ty.
 Backend Flask, dữ liệu lưu trong SQLite, giao diện Jinja2 + Bootstrap 5.
 
+**🔗 Xem thử trực tiếp: https://nguyen-thanh-phong.vercel.app**
+
+Đăng nhập thử bằng tài khoản nhân viên `an.nv` / `123456`,
+hoặc vào trang quản trị `/admin` với mật khẩu `admin123`.
+
+> ⚠️ Đây là **bản demo học tập** nên mật khẩu để mặc định cho dễ dùng thử.
+> Bản chạy trên Vercel lưu database trong `/tmp`, nên dữ liệu bạn thêm vào sẽ
+> quay về trạng thái mẫu sau một thời gian không ai truy cập. Xem giải thích ở
+> mục *Triển khai* trong [DESIGN.md](DESIGN.md).
+
 ## Tài liệu
 
 | File | Nội dung |
