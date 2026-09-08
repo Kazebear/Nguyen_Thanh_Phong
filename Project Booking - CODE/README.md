@@ -1,7 +1,15 @@
-# Office Booking
+<img src="static/images/logo.svg" alt="Office Booking" width="260">
 
 Website nội bộ quản lý và đặt phòng họp cho văn phòng công ty.
 Backend Flask, dữ liệu lưu trong SQLite, giao diện Jinja2 + Bootstrap 5.
+
+## Tài liệu
+
+| File | Nội dung |
+|---|---|
+| **README.md** | File này — hướng dẫn cài đặt, chạy và tra cứu tính năng |
+| **[PRD.md](PRD.md)** | *Product Requirements Document* — sản phẩm **làm gì** và **vì sao**: bối cảnh, người dùng mục tiêu, user stories, danh sách chức năng, quy tắc nghiệp vụ, phạm vi |
+| **[DESIGN.md](DESIGN.md)** | Thiết kế kỹ thuật — hệ thống được xây **như thế nào**: kiến trúc 3 lớp, schema database, bảng định tuyến, thuật toán chống trùng lịch, bảo mật, hệ màu và logo |
 
 ## Cài đặt và chạy
 
