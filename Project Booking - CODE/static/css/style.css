@@ -42,17 +42,20 @@ main { flex: 1 0 auto; }
   gap: .5rem;
 }
 
+/* Logo thương hiệu. Màu và bo góc nằm trong chính file SVG nên ở đây chỉ
+   cần khoá kích thước để logo không nhảy layout lúc ảnh chưa tải xong. */
 .brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  background: var(--ob-primary);
-  color: #fff;
-  font-size: .85rem;
-  letter-spacing: .5px;
+}
+
+/* Logo đầy đủ (biểu tượng + chữ) dùng ở trang Về chúng tôi. */
+.brand-lockup {
+  display: block;
+  width: 260px;
+  max-width: 100%;
+  height: auto;
 }
 
 .app-navbar .nav-link {
