@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# SQLite: tự tạo lại từ data/*.json khi chạy lần đầu
+*.db
+
+# Vercel
+.vercel/
